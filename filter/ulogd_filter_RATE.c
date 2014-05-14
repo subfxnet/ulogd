@@ -1,0 +1,120 @@
+/**
+ * ulogd_filter_RATE.c
+ *
+ * ulogd filter plugin to operate on a limited set of available packets/flow.
+ *
+ * (C) 2014 by Jason Hensley <jhensley@subfx.net>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2
+ * as published by the Free Software Foundation
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ *
+ */
+
+#include <stdio.h>
+#include <sys/time.h>
+#include <ulogd/ulogd.h>
+
+enum config_keys {
+  RATE_WINDOW,
+  RATE_LIMIT,
+};
+
+struct rate_stats {
+  struct timeval start_time;
+  int64_t collected;
+};
+
+static struct config_keyset rate_cfg_kset = {
+  .num_ces = 2,
+  .ces = {
+    [RATE_WINDOW] = {
+      .key = "window",
+      .type = CONFIG_TYPE_INT,
+      .options = CONFIG_OPT_NONE,
+      .u.value = 0,
+    },
+    [RATE_LIMIT] = {
+      .key = "limit",
+      .type = CONFIG_TYPE_INT,
+      .options = CONFIG_OPT_NONE,
+      .u.value = 0,
+    },
+  }
+};
+
+#define rate_window_ce(x)  (x->config_kset->ces[0])
+#define rate_limit_ce(x)   (x->config_kset->ces[1])
+
+static int rate_interpreter(struct ulogd_pluginstance *upi)
+{
+  struct timeval then, now;
+  struct rate_stats *stats = (struct rate_stats *)upi->private;
+
+  then.tv_sec  = stats->start_time.tv_sec  + (rate_window_ce(upi).u.value / 1000);
+  then.tv_usec = stats->start_time.tv_usec + ((rate_window_ce(upi).u.value % 1000) * 1000);
+
+  gettimeofday(&now, 0);
+  
+  if (timercmp(&then, &now, <)) {
+    stats->start_time.tv_sec  = now.tv_sec;
+    stats->start_time.tv_usec = now.tv_usec;
+    stats->collected = 0UL;
+    ulogd_log(ULOGD_DEBUG, "resetting collection window to now for plugin %s, id = %s\n", upi->plugin->name, upi->id);
+  }
+
+  stats->collected++;
+  if (stats->collected > rate_limit_ce(upi).u.value) {
+    ulogd_log(ULOGD_DEBUG, "skipping sample #%lu, threshold set to %lu\n", stats->collected, rate_limit_ce(upi).u.value);
+    return ULOGD_IRET_STOP;
+  }
+  return ULOGD_IRET_OK;	
+}
+
+static int configure(struct ulogd_pluginstance *upi, struct ulogd_pluginstance_stack *stack)
+{
+  ulogd_log(ULOGD_DEBUG, "parsing config file section plugin %s, id = %s\n", upi->plugin->name, upi->id);
+  config_parse_file(upi->id, upi->config_kset);
+  return 0;
+}
+
+static int start(struct ulogd_pluginstance *upi) {
+  struct rate_stats *stats = (struct rate_stats *)upi->private;
+
+  stats->collected = 0UL;
+  gettimeofday(&stats->start_time, 0);
+
+  return 0;
+}
+
+static struct ulogd_plugin rate_pluging = {
+  .name = "RATE",
+  .input = {
+    .type = ULOGD_DTYPE_PACKET | ULOGD_DTYPE_FLOW,
+  },
+  .output = {
+    .type = ULOGD_DTYPE_PACKET | ULOGD_DTYPE_FLOW | ULOGD_DTYPE_NULL,
+  },
+  .priv_size = sizeof(struct rate_stats),
+  .interp = &rate_interpreter,
+  .config_kset = &rate_cfg_kset,
+  .start = &start,
+  .configure = &configure,
+  .version = VERSION,
+};
+
+void __attribute__ ((constructor)) init(void);
+
+void init(void)
+{
+  ulogd_register_plugin(&rate_pluging);
+}

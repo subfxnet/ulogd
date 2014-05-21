@@ -3,7 +3,7 @@
  *
  * ulogd filter plugin to only operate on a limited set of available packets/flow.
  *
- * (C) 2014 by Jason Hensley <jhensley@akamai.com>
+ * (C) 2014 by Jason Hensley <jhensley at subfx.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2

@@ -1,9 +1,9 @@
 /**
  * ulogd_filter_RATE.c
  *
- * ulogd filter plugin to operate on a limited set of available packets/flow.
+ * ulogd filter plugin to only operate on a limited set of available packets/flow.
  *
- * (C) 2014 by Jason Hensley <jhensley@subfx.net>
+ * (C) 2014 by Jason Hensley <jhensley@akamai.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2
@@ -96,18 +96,23 @@ static int start(struct ulogd_pluginstance *upi) {
   return 0;
 }
 
+static int stop(struct ulogd_pluginstance *upi) {
+  return ULOGD_IRET_OK;
+}
+
 static struct ulogd_plugin rate_pluging = {
   .name = "RATE",
   .input = {
-    .type = ULOGD_DTYPE_PACKET | ULOGD_DTYPE_FLOW,
+    .type = ULOGD_DTYPE_RAW | ULOGD_DTYPE_PACKET | ULOGD_DTYPE_FLOW,
   },
   .output = {
-    .type = ULOGD_DTYPE_PACKET | ULOGD_DTYPE_FLOW | ULOGD_DTYPE_NULL,
+    .type = ULOGD_DTYPE_RAW | ULOGD_DTYPE_PACKET | ULOGD_DTYPE_FLOW,
   },
   .priv_size = sizeof(struct rate_stats),
   .interp = &rate_interpreter,
   .config_kset = &rate_cfg_kset,
   .start = &start,
+  .stop = &stop,
   .configure = &configure,
   .version = VERSION,
 };

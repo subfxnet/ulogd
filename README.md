@@ -12,9 +12,11 @@ Filter Plugins
 
 The rate limit plugin **RATE** does exactly what it says.  It allows you to throttle the amount of packets a ulogd stack will process in a given time interval.  There are two configuration options:
 
-| ---------- | ------------------------------------------------------------ |
-| **window** | The number of milliseconds in which the **limit** is counted |
-| **limit**  | The number of packets to process within the given **window** |
+* **window**
+    * The number of milliseconds in which the **limit** is counted
+
+* **limit**
+    * The number of packets to process within the given **window**
 
 A sample ulogd.conf utilizing the **RATE** plugin could look like:
 
@@ -38,7 +40,7 @@ group=10
 sync=1
 ```
 
-The above configuration would ensure only 100 packets were processed every 10 seconds.
+The above configuration would ensure only 100 packets are processed every 10 seconds.
 
 Valid input plugin types for the `RATE` plugin are `ULOGD_DTYPE_SUM`, `ULOGD_DTYPE_RAW`, `ULOGD_DTYPE_PACKET` and `ULOGD_DTYPE_FLOW`
 
@@ -80,6 +82,10 @@ There are several configuration options available.
     * The TCP port of the Redis server
     * Default value is 6379
 
+* **`db`**
+    * The Redis database number to use
+    * Default value is 1
+
 * **`sockpath`**
     * UNIX domain socket path to use for Redis server connection
     * No default value.  If this is set it will override host & port settings
@@ -107,7 +113,7 @@ There are several configuration options available.
 
 ##### Keyformat
 
-The `keyformat` configuration option uses a simple macro replacement syntax to allow inserting various input fields as components of the key.  This requires some prior knowledge of the input keys the Redis output plugin will receive from the stack.  The syntax is simply `{{` keyname `}}`.  There is a maximum of 8 macros allowed in the `keyformat` configuration option.
+The `keyformat` configuration option uses a simple macro replacement syntax to allow inserting various input fields as components of the key.  This requires some prior knowledge of the input keys the Redis output plugin will receive from the stack.  The syntax is simply `{{keyname}}`.  There is a maximum of 8 macros allowed in the `keyformat` configuration option.
 
 #### Example configuration
 

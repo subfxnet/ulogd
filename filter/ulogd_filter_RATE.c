@@ -103,10 +103,10 @@ static int stop(struct ulogd_pluginstance *upi) {
 static struct ulogd_plugin rate_pluging = {
   .name = "RATE",
   .input = {
-    .type = ULOGD_DTYPE_RAW | ULOGD_DTYPE_PACKET | ULOGD_DTYPE_FLOW,
+    .type = ULOGD_DTYPE_RAW | ULOGD_DTYPE_PACKET | ULOGD_DTYPE_FLOW, ULOGD_DTYPE_SUM,
   },
   .output = {
-    .type = ULOGD_DTYPE_RAW | ULOGD_DTYPE_PACKET | ULOGD_DTYPE_FLOW,
+    .type = ULOGD_DTYPE_RAW | ULOGD_DTYPE_PACKET | ULOGD_DTYPE_FLOW, ULOGD_DTYPE_SUM,
   },
   .priv_size = sizeof(struct rate_stats),
   .interp = &rate_interpreter,

@@ -1,19 +1,19 @@
-ULOGD
-=====
+ULOGD2
+======
 
-Plugins &amp; enhancements for Linux netfilter's ulogd 2.x program.
+Plugins for Linux netfilter's ulogd 2.x program.
 
 Ulogd can be found at http://www.netfilter.org/projects/ulogd/
 
-Filters
--------
+Filter Plugins
+--------------
 
 #### Rate Limiting
 
 The rate limit plugin **RATE** does exactly what it says.  It allows you to throttle the amount of packets a ulogd stack will process in a given time interval.  There are two configuration options:
 
-**window** | The number of milliseconds in which the **limit** is counted
-**limit**  | The number of packets to process within the given **window**
+| **window** | The number of milliseconds in which the **limit** is counted |
+| **limit**  | The number of packets to process within the given **window** |
 
 A sample ulogd.conf utilizing the **RATE** plugin could look like:
 
@@ -62,16 +62,50 @@ Output
 
 #### Redis
 
-This output plugin allows you to send your packet or flow data directly into a Redis database.  While this is self explanatory, there are several configuration options available.
+This output plugin allows you to send your packet or flow data directly into a Redis database.  The plugin uses Redis' ability to store associative arrays (hash tables) as a value internally.  The plugin takes the key/value input from the other members of the stack and runs `HMSET` against the Redis server.
 
-**host**      | The hostname or IP address of the Redis server
-**port**      | The TCP port of the Redis server
-**sockpath**  | UNIX domain socket path to use for Redis server connection
-**passwd**    | Password to use if Redis authentication is enabled
-**pipeline**  | Number of commands to pipeline to Redis
-**exclude**   | Comma delmited list of fields to exclude from Redis persistence
-**expire**    | Number of seconds in which Redis keys should expire
-**keyformat** | Format to use for the Redis keys
+```
+HMSET "keyformat" key1 value1 key2 value2 ...
+```
+
+There are several configuration options available.
+
+* **`host`**
+    * The hostname or IP address of the Redis server
+    * Default value is "127.0.0.1"
+
+* **`port`**
+    * The TCP port of the Redis server
+    * Default value is 6379
+
+* **`sockpath`**
+    * UNIX domain socket path to use for Redis server connection
+    * No default value.  If this is set it will override host & port settings
+
+* **`passwd`**
+    * Password to use if Redis authentication is enabled
+    * No default value
+
+* **`pipeline`**
+    * Number of commands to pipeline to Redis
+    * Default value is 1
+
+* **`exclude`**
+    * Comma delmited list of fields to exclude from Redis persistence
+    * No default value
+
+* **`expire`**
+    * Number of seconds in which Redis keys should expire
+    * No default value
+    * If this option is set, for every `HMSET <keyformat> ...` insert made another command `EXPIRE <keyformat> <expire>` is sent to Redis
+
+* **`keyformat`**
+    * Format to use for the Redis keys
+    * Default value is "{{ip.saddr}}|{{ip.daddr}}|{{time.oob.secs}}.{{time.oob.usecs}}"
+
+## Keyformat
+
+The `keyformat` configuration option uses a simple macro replacement syntax to allow inserting various input fields as components of the key.  This requires some prior knowledge of the input keys the Redis output plugin will receive from the stack.  The syntax is simply `{{` keyname `}}`.  There is a maximum of 8 macros allowed in the `keyformat` configuration option.
 
 ### Building
 

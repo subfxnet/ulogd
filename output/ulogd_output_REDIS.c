@@ -3,7 +3,7 @@
  *
  * ulogd output target to feed data to a Redis database.
  *
- * (C) 2014 Jason Hensley <jhensley@subfx.net>
+ * (C) 2014 Jason Hensley <jhensley at subfx.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License version 2
@@ -44,8 +44,8 @@
   ((unsigned char *)&addr)[3]
 
 static struct config_keyset redis_cfg_kset = {
-	.num_ces = 9,
-	.ces = {
+  .num_ces = 9,
+  .ces = {
     {
       .key = "host",
       .type = CONFIG_TYPE_STRING,

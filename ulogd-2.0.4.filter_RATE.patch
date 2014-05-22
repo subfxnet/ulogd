@@ -1,7 +1,8 @@
-diff -Naur ulogd-2.0.4/filter/Makefile.am ulogd-2.0.4.subfx/filter/Makefile.am
---- ulogd-2.0.4/filter/Makefile.am	2013-06-18 16:52:50.241920892 -0400
-+++ ulogd-2.0.4.subfx/filter/Makefile.am	2014-05-22 11:41:21.006275057 -0400
-@@ -7,7 +7,7 @@
+diff --git a/filter/Makefile.am b/filter/Makefile.am
+index 875850b..01a8d4e 100644
+--- a/filter/Makefile.am
++++ b/filter/Makefile.am
+@@ -7,7 +7,7 @@ pkglib_LTLIBRARIES = ulogd_filter_IFINDEX.la ulogd_filter_PWSNIFF.la \
  			 ulogd_filter_PRINTPKT.la ulogd_filter_PRINTFLOW.la \
  			 ulogd_filter_IP2STR.la ulogd_filter_IP2BIN.la \
  			 ulogd_filter_HWHDR.la ulogd_filter_MARK.la \
@@ -10,17 +11,19 @@ diff -Naur ulogd-2.0.4/filter/Makefile.am ulogd-2.0.4.subfx/filter/Makefile.am
  
  ulogd_filter_IFINDEX_la_SOURCES = ulogd_filter_IFINDEX.c
  ulogd_filter_IFINDEX_la_LDFLAGS = -avoid-version -module
-@@ -36,3 +36,6 @@
+@@ -36,3 +36,6 @@ ulogd_filter_PRINTPKT_la_LDFLAGS = -avoid-version -module
  
  ulogd_filter_PRINTFLOW_la_SOURCES = ulogd_filter_PRINTFLOW.c ../util/printflow.c
  ulogd_filter_PRINTFLOW_la_LDFLAGS = -avoid-version -module
 +
 +ulogd_filter_RATE_la_SOURCES = ulogd_filter_RATE.c
 +ulogd_filter_RATE_la_LDFLAGS = -avoid-version -module
-diff -Naur ulogd-2.0.4/filter/ulogd_filter_RATE.c ulogd-2.0.4.subfx/filter/ulogd_filter_RATE.c
---- ulogd-2.0.4/filter/ulogd_filter_RATE.c	1969-12-31 19:00:00.000000000 -0500
-+++ ulogd-2.0.4.subfx/filter/ulogd_filter_RATE.c	2014-05-22 11:40:48.126274815 -0400
-@@ -0,0 +1,125 @@
+diff --git a/filter/ulogd_filter_RATE.c b/filter/ulogd_filter_RATE.c
+new file mode 100644
+index 0000000..8ae475a
+--- /dev/null
++++ b/filter/ulogd_filter_RATE.c
+@@ -0,0 +1,126 @@
 +/**
 + * ulogd_filter_RATE.c
 + *
@@ -48,31 +51,31 @@ diff -Naur ulogd-2.0.4/filter/ulogd_filter_RATE.c ulogd-2.0.4.subfx/filter/ulogd
 +#include <ulogd/ulogd.h>
 +
 +enum config_keys {
-+  RATE_WINDOW,
-+  RATE_LIMIT,
++	RATE_WINDOW,
++	RATE_LIMIT,
 +};
 +
 +struct rate_stats {
-+  struct timeval start_time;
-+  int64_t collected;
++	struct timeval start_time;
++	int64_t collected;
 +};
 +
 +static struct config_keyset rate_cfg_kset = {
-+  .num_ces = 2,
-+  .ces = {
-+    [RATE_WINDOW] = {
-+      .key = "window",
-+      .type = CONFIG_TYPE_INT,
-+      .options = CONFIG_OPT_NONE,
-+      .u.value = 0,
-+    },
-+    [RATE_LIMIT] = {
-+      .key = "limit",
-+      .type = CONFIG_TYPE_INT,
-+      .options = CONFIG_OPT_NONE,
-+      .u.value = 0,
-+    },
-+  }
++	.num_ces = 2,
++	.ces = {
++		[RATE_WINDOW] = {
++			.key = "window",
++			.type = CONFIG_TYPE_INT,
++			.options = CONFIG_OPT_NONE,
++			.u.value = 0,
++		},
++		[RATE_LIMIT] = {
++			.key = "limit",
++			.type = CONFIG_TYPE_INT,
++			.options = CONFIG_OPT_NONE,
++			.u.value = 0,
++		},
++	}
 +};
 +
 +#define rate_window_ce(x)  (x->config_kset->ces[0])
@@ -80,69 +83,70 @@ diff -Naur ulogd-2.0.4/filter/ulogd_filter_RATE.c ulogd-2.0.4.subfx/filter/ulogd
 +
 +static int rate_interpreter(struct ulogd_pluginstance *upi)
 +{
-+  struct timeval then, now;
-+  struct rate_stats *stats = (struct rate_stats *)upi->private;
++	struct timeval then, now;
++	struct rate_stats *stats = (struct rate_stats *)upi->private;
 +
-+  then.tv_sec  = stats->start_time.tv_sec  + (rate_window_ce(upi).u.value / 1000);
-+  then.tv_usec = stats->start_time.tv_usec + ((rate_window_ce(upi).u.value % 1000) * 1000);
++	then.tv_sec  = stats->start_time.tv_sec  + (rate_window_ce(upi).u.value / 1000);
++	then.tv_usec = stats->start_time.tv_usec + ((rate_window_ce(upi).u.value % 1000) * 1000);
 +
-+  gettimeofday(&now, 0);
++	gettimeofday(&now, 0);
 +  
-+  if (timercmp(&then, &now, <)) {
-+    stats->start_time.tv_sec  = now.tv_sec;
-+    stats->start_time.tv_usec = now.tv_usec;
-+    stats->collected = 0UL;
-+    ulogd_log(ULOGD_DEBUG, "resetting collection window to now for plugin %s, id = %s\n", upi->plugin->name, upi->id);
-+  }
++	if (timercmp(&then, &now, <)) {
++		stats->start_time.tv_sec  = now.tv_sec;
++		stats->start_time.tv_usec = now.tv_usec;
++		stats->collected = 0UL;
++		ulogd_log(ULOGD_DEBUG, "resetting collection window to now for plugin %s, id = %s\n", upi->plugin->name, upi->id);
++	}
 +
-+  stats->collected++;
-+  if (stats->collected > rate_limit_ce(upi).u.value) {
-+    ulogd_log(ULOGD_DEBUG, "skipping sample #%lu, threshold set to %lu\n", stats->collected, rate_limit_ce(upi).u.value);
-+    return ULOGD_IRET_STOP;
-+  }
-+  return ULOGD_IRET_OK;	
++	stats->collected++;
++	if (stats->collected > rate_limit_ce(upi).u.value) {
++		ulogd_log(ULOGD_DEBUG, "skipping sample #%lu, threshold set to %lu\n", stats->collected, rate_limit_ce(upi).u.value);
++		return ULOGD_IRET_STOP;
++	}
++
++	return ULOGD_IRET_OK;	
 +}
 +
 +static int configure(struct ulogd_pluginstance *upi, struct ulogd_pluginstance_stack *stack)
 +{
-+  ulogd_log(ULOGD_DEBUG, "parsing config file section plugin %s, id = %s\n", upi->plugin->name, upi->id);
-+  config_parse_file(upi->id, upi->config_kset);
-+  return 0;
++	ulogd_log(ULOGD_DEBUG, "parsing config file section plugin %s, id = %s\n", upi->plugin->name, upi->id);
++	config_parse_file(upi->id, upi->config_kset);
++	return 0;
 +}
 +
 +static int start(struct ulogd_pluginstance *upi) {
-+  struct rate_stats *stats = (struct rate_stats *)upi->private;
++	struct rate_stats *stats = (struct rate_stats *)upi->private;
 +
-+  stats->collected = 0UL;
-+  gettimeofday(&stats->start_time, 0);
++	stats->collected = 0UL;
++	gettimeofday(&stats->start_time, 0);
 +
-+  return 0;
++	return 0;
 +}
 +
 +static int stop(struct ulogd_pluginstance *upi) {
-+  return ULOGD_IRET_OK;
++	return ULOGD_IRET_OK;
 +}
 +
 +static struct ulogd_plugin rate_pluging = {
-+  .name = "RATE",
-+  .input = {
-+    .type = ULOGD_DTYPE_RAW | ULOGD_DTYPE_PACKET | ULOGD_DTYPE_FLOW,
-+  },
-+  .output = {
-+    .type = ULOGD_DTYPE_RAW | ULOGD_DTYPE_PACKET | ULOGD_DTYPE_FLOW,
-+  },
-+  .priv_size = sizeof(struct rate_stats),
-+  .interp = &rate_interpreter,
-+  .config_kset = &rate_cfg_kset,
-+  .start = &start,
-+  .stop = &stop,
-+  .configure = &configure,
-+  .version = VERSION,
++	.name = "RATE",
++	.input = {
++		.type = ULOGD_DTYPE_RAW | ULOGD_DTYPE_PACKET | ULOGD_DTYPE_FLOW,
++	},
++	.output = {
++		.type = ULOGD_DTYPE_RAW | ULOGD_DTYPE_PACKET | ULOGD_DTYPE_FLOW,
++	},
++	.priv_size = sizeof(struct rate_stats),
++	.interp = &rate_interpreter,
++	.config_kset = &rate_cfg_kset,
++	.start = &start,
++	.stop = &stop,
++	.configure = &configure,
++	.version = VERSION,
 +};
 +
 +void __attribute__ ((constructor)) init(void);
 +
 +void init(void)
 +{
-+  ulogd_register_plugin(&rate_pluging);
++	ulogd_register_plugin(&rate_pluging);
 +}
